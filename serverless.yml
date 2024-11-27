@@ -158,7 +158,7 @@ resources:
       Properties:
         Type: network
         Name: !Join ["", [!Ref ComponentName, "-lb"]]
-        Scheme: internal
+        Scheme: internet-facing
         Subnets:
           - !ImportValue athvioPublicSubnetId
         LoadBalancerAttributes:
