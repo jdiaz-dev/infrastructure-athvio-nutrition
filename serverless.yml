@@ -13,21 +13,6 @@ provider:
 
 resources:
   Parameters:
-    # ClusterArn:
-    #   Type: String
-    #   Description: Existent cluster for add new services
-    #   Default: arn:aws:ecs:${aws:region}:${aws:accountId}:cluster/${self:custom.clusterName}
-    # SecurityGroup:
-    #   Type: String
-    #   Description: Security group used for ${self:service}
-    #   Default: ${self:custom.securityGroup.${opt:stage}.${aws:region}}
-    # VPCId:
-    #   Type: AWS::EC2::VPC::Id
-    #   Default: ${self:custom.VPCId.${aws:region}.${opt:stage}}
-    # Subnet1:
-    #   Type: AWS::EC2::Subnet::Id
-    #   Description: Application subnet 1
-      # Default: ${self:custom.Subnet.${opt:stage}.${aws:region}.subnet1}
     ComponentName:
       Type: String
       Default: athvio-nutrition
@@ -52,15 +37,15 @@ resources:
     LoadBalancerPort2:
       Type: Number
       Description: Container port of app requiring LoadBalancer exposure
-      Default: 57343
+      Default: 56343
     AppContainerPort2:
       Type: Number
       Description: Container port of app requiring LoadBalancer exposure
-      Default: 57343
+      Default: 56343
     AppHostPort2:
       Type: Number
       Description: Host port of app requiring LoadBalancer exposure
-      Default: 57343
+      Default: 56343
   Conditions:
     IsNorthVirg:
       Fn::Equals:
@@ -134,7 +119,7 @@ resources:
         Name: !Ref TargetGroupKeyManagerName2
         Port: !Ref AppContainerPort2
         HealthCheckPath: /ping
-        HealthCheckPort: "57343"
+        HealthCheckPort: "56343"
         HealthCheckProtocol: HTTP
         Protocol: TCP
         TargetType: ip
@@ -156,9 +141,9 @@ resources:
         - LoadBalancerAccessLogsBucket
         - LoadBalancerAccessLogsBucketPolicy
       Properties:
-        Type: network
+        Type: gateway
         Name: !Join ["", [!Ref ComponentName, "-lb"]]
-        Scheme: internal
+        Scheme: internet-facing
         Subnets:
           - !ImportValue athvioPublicSubnetId
         LoadBalancerAttributes:
@@ -209,7 +194,7 @@ resources:
               - Name: NODE_ENV
                 Value: ${opt:stage}
               - Name: PORT
-                Value: "57343"
+                Value: "56343"
             PortMappings:
               - ContainerPort: !Ref AppContainerPort2
                 HostPort: !Ref AppHostPort2
@@ -232,14 +217,6 @@ resources:
           !Join ["", ["/ecs/logs-", !Ref ComponentName, "-${aws:region}"]]
         RetentionInDays: 60
 
-    # SubscriptionFilter:
-    #   Type: AWS::Logs::SubscriptionFilter
-    #   Properties:
-    #     RoleArn: arn:aws:iam::${aws:accountId}:role/${self:provider.stage}-kinesis-firehose-datadog-CloudWatchLogsRole-${self:custom.${aws:region}}
-    #     LogGroupName: !Ref LogGroupAthvioNutrition
-    #     FilterPattern: ""
-    #     DestinationArn: arn:aws:firehose:${aws:region}:${aws:accountId}:deliverystream/${opt:stage}-kinesis-firehose-datadog-DatadogDeliveryStream
-
     ServiceAthvioNutrition:
       Type: AWS::ECS::Service
       DependsOn:
@@ -261,25 +238,6 @@ resources:
           - ContainerName: !Ref ContainerName
             ContainerPort: !Ref AppContainerPort2
             TargetGroupArn: !Ref TargetGroupAthvioNutrition
-
-    # SecretManagerPermissions:
-    #   Type: AWS::IAM::Policy
-    #   Condition: IsNorthVirg
-    #   Properties:
-    #     PolicyName:
-    #       !Join ["", ["fargate-policy-secret-manager-", !Ref ComponentName]]
-    #     PolicyDocument:
-    #       Version: "2012-10-17"
-    #       Statement:
-    #         - Effect: Allow
-    #           Action:
-    #             - secretsmanager:GetSecretValue
-    #             - secretsmanager:DescribeSecret
-    #             - secretsmanager:ListSecretVersionIds
-    #           Resource:
-    #             - "arn:aws:secretsmanager:us-east-1:${aws:accountId}:secret:*/*"
-    #     Roles:
-    #       - !Ref ExecutionTaskRoleAthvioNutrition
 
     FargatePolicyAthvioNutrition:
       Type: AWS::IAM::Policy
@@ -326,17 +284,3 @@ custom:
     develop: integration
     staging: staging
     prodblue: prodblue
-  # securityGroup:
-  #   develop:
-  #     us-east-1: sg-02aa7def00fa5014a
-
-  # VPCId:
-  #   us-east-1:
-  #     develop: vpc-096382d9498b7f09f
-
-  # Subnet:
-  #   develop:
-  #     us-east-1:
-  #       subnet1: subnet-05ac6b595ca624241
-
-# add envrionment variables to the task definition
